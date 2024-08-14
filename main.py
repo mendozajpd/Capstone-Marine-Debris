@@ -31,10 +31,20 @@ while ret:
         frame = cv2.resize(frame, target_resolution)
 
         # Detect objects, track objects
-        results = model.track(frame, conf=0.50, persist=False, imgsz=(640, 640))
+        tracks = model.track(frame, conf=0.50, persist=False, imgsz=(640, 640))
+
+        # Count the number of detected objects
+        num_objects = len(tracks)
+        print(f"Number of detected objects in this frame: {num_objects}")
 
         # Plot results
-        frame_ = results[0].plot()
+        frame_ = tracks[0].plot()
+
+        # Convert the count to string so that we can display it on frame
+        num_objects_str = str(num_objects)
+
+        # Putting the object count on the frame, below the FPS
+        cv2.putText(frame_, num_objects_str, (7, 140), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
 
         # Time when we finish processing for this frame
         new_frame_time = time.time()
@@ -50,8 +60,8 @@ while ret:
         cv2.putText(frame_, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
 
         # Visualize
-        cv2.imshow('frame', frame_)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        cv2.imshow("frame", frame_)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
 # Release video capture object
