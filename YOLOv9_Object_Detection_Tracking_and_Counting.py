@@ -9,6 +9,7 @@ from utils.general import set_logging
 from supervision import Detections as BaseDetections
 from supervision.config import CLASS_NAME_DATA_FIELD
 from IPython.display import HTML
+import time
 
 # Extending Supervision's `Detections` to Handle YOLOv9 Results
 class ExtendedDetections(BaseDetections):
@@ -37,6 +38,7 @@ class ExtendedDetections(BaseDetections):
 # Loading the Model
 set_logging(verbose=False)
 device = select_device(0)
+print(device)
 model = DetectMultiBackend(weights='gelan-c.pt', device=device, data='data/coco.yaml', fuse=True)
 model = AutoShape(model)
 
@@ -141,23 +143,38 @@ def add_labels_to_frame(annotator, frame, detections, model):
     labels = [f"#{tracker_id} {model.model.names[class_id]} {confidence:0.2f}" for confidence, class_id, tracker_id in zip(detections.confidence, detections.class_id, detections.tracker_id)]
     return annotator.annotate(scene=frame, detections=detections, labels=labels)
 
-def process_video(model, config=dict(conf=0.1, iou=0.45, classes=True,), counting_zone=True, show_labels=True, source_path=SOURCE_VIDEO_PATH, target_path=TARGET_VIDEO_PATH):
+def process_video(model, config=dict(conf=0.1, iou=0.45, classes=True,), counting_zone=True, show_labels=True, source_path=SOURCE_VIDEO_PATH, target_path=TARGET_VIDEO_PATH, skip_frames=3):
     model, video_info = setup_model_and_video_info(model, config, source_path)
     byte_tracker = create_byte_tracker(video_info)
     annotators_list, trace_annotator, label_annotator = setup_annotators()
     polygon_zone, polygon_zone_annotator = setup_counting_zone(counting_zone, video_info) if counting_zone else (None, None)
 
+    last_class_counts = None
+    last_time = time.time()
+
     def callback(frame: np.ndarray, index: int) -> np.ndarray:
+        nonlocal last_class_counts, last_time
+        if index % skip_frames != 0:
+            return frame
+
         frame_rgb = frame[..., ::-1]
         results = model(frame_rgb, size=608, augment=False)
         detections = ExtendedDetections.from_yolov9(results)
-        # print(results)
-        # print(detections)
         
         # Count the class names
         unique, counts = np.unique(detections.data['class_name'], return_counts=True)
         class_counts = dict(zip(unique, counts))
-        print(class_counts)
+
+        # Only print if counts have changed
+        if class_counts != last_class_counts:
+            print(class_counts)
+            last_class_counts = class_counts
+
+        # Calculate and display FPS
+        current_time = time.time()
+        fps = 1 / (current_time - last_time)
+        last_time = current_time
+        print(f"FPS: {fps}")
 
         # Display the frame with detections using cv2.imshow
         annotated_frame = annotate_frame(frame, index, video_info, detections, byte_tracker, counting_zone, polygon_zone, polygon_zone_annotator, trace_annotator, annotators_list, label_annotator, show_labels, model)
