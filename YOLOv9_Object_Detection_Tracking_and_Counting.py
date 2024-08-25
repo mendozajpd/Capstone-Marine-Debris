@@ -10,6 +10,7 @@ from supervision import Detections as BaseDetections
 from supervision.config import CLASS_NAME_DATA_FIELD
 from IPython.display import HTML
 import time
+from collections import Counter
 
 # Extending Supervision's `Detections` to Handle YOLOv9 Results
 class ExtendedDetections(BaseDetections):
@@ -27,18 +28,19 @@ class ExtendedDetections(BaseDetections):
 
         if not xyxy:
             return cls.empty()
+        
+        class_counts = Counter(class_names)
 
         return cls(
             xyxy=np.vstack(xyxy),
             confidence=np.array(confidences),
             class_id=np.array(class_ids),
             data={CLASS_NAME_DATA_FIELD: class_names},
-        )
+        ), class_counts
 
 # Loading the Model
 set_logging(verbose=False)
 device = select_device(0)
-print(device)
 model = DetectMultiBackend(weights='gelan-c.pt', device=device, data='data/coco.yaml', fuse=True)
 model = AutoShape(model)
 
@@ -151,6 +153,8 @@ def process_video(model, config=dict(conf=0.1, iou=0.45, classes=True,), countin
 
     last_class_counts = None
     last_time = time.time()
+    
+    unique_ids_per_class = {}
 
     def callback(frame: np.ndarray, index: int) -> np.ndarray:
         nonlocal last_class_counts, last_time
@@ -159,7 +163,10 @@ def process_video(model, config=dict(conf=0.1, iou=0.45, classes=True,), countin
 
         frame_rgb = frame[..., ::-1]
         results = model(frame_rgb, size=608, augment=False)
-        detections = ExtendedDetections.from_yolov9(results)
+        detections, class_counts = ExtendedDetections.from_yolov9(results)
+        
+        # Print the class counts
+        print("Class counts:", class_counts)
         
         # Count the class names
         unique, counts = np.unique(detections.data['class_name'], return_counts=True)
