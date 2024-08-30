@@ -20,17 +20,20 @@ function Charter() {
   const [error, setError] = useState(false);
   const [vehicleCount, setVehicleCount] = useState(0);
   const [classCount, setClassCount] = useState(0);
+  const [objects, setObjects] = useState({});
 
-  const videoSource = "http://127.0.0.1:5000/video_frame";
+  const videoSource = "http://192.168.193.206:5000/video_frame";
 
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("http://127.0.0.1:5000/backend_data")
+      fetch("http://192.168.193.206:5000/backend_data")
         .then((response) => response.json())
         .then((data) => {
-          setVehicleCount(data.object_count);
-          setClassCount(data.class_counts);
+          // setVehicleCount(data.object_count);
+          // setClassCount(data.class_counts);
+          setObjects(data.object_count);
+          console.log(data.object_count);
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -41,9 +44,9 @@ function Charter() {
     return () => clearInterval(interval);
   }, []);
 
-  // useEffect(() => {
-  //   fetchProject();
-  // }, [project]);
+  useEffect(() => {
+    fetchProject();
+  }, [project]);
 
   const fetchProject = async () => {
     if (!project) {
@@ -105,11 +108,11 @@ function Charter() {
   );
   return (
     <div className="d-flex flex-column w-100 vh-100 p-3">
-      {/* <NewProject
+      <NewProject
         visible={newProject}
         onHide={() => setNewProject(false)}
         onSave={handleNewProjectSave}
-      /> */}
+      />
       <div className="d-flex vh-75">
         <div className="d-flex justify-content-center align-items-center w-50 border">
           {error ? (
@@ -131,6 +134,7 @@ function Charter() {
         <div className="d-flex w-50 border">
           <div className="w-50 h-100 border">
             <DataTable className="w-100">
+              <Column field="id" header="ID"></Column>
               <Column field="scan" header="Scanned"></Column>
               <Column field="cf" sortable header="Confidence"></Column>
             </DataTable>
@@ -164,8 +168,8 @@ function Charter() {
               </div>
             </Card>
             <div className="d-flex flex-row card">
-              <Card title="Objects" className="w-50">
-                <h3>0</h3>
+              <Card title="Total" className="w-50">
+                <h3>{Object.values(objects).reduce((a, b) => a + b, 0)}</h3>
               </Card>
               <Card title="Unidentified" className="w-50">
                 <h3>0</h3>
@@ -173,10 +177,24 @@ function Charter() {
             </div>
             <div className="d-flex flex-row card">
               <Card title="Marine" className="w-50">
-                <h3>0</h3>
+                {(() => {
+                  const entries = Object.entries(objects);
+                  if (entries.length > 0) {
+                    const [key, value] = entries[0];
+                    return <h3 key={key}>{value}</h3>;
+                  }
+                  return null;
+                })()}
               </Card>
               <Card title="Non-Marine" className="w-50">
-                <h3>0</h3>
+                {(() => {
+                  const entries = Object.entries(objects);
+                  if (entries.length > 0) {
+                    const [key, value] = entries[1];
+                    return <h3 key={key}>{value}</h3>;
+                  }
+                  return null;
+                })()}
               </Card>
             </div>
           </div>

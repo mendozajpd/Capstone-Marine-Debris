@@ -5,7 +5,11 @@ const axiosClient = axios.create({
     // baseURL: 'http://localhost:8000/api'
     
     // SAIL
-    baseURL: 'http://localhost:80/api'
+    // baseURL: 'http://localhost:80/api'
+    
+    // ZEROTIER
+    baseURL: 'http://192.168.193.206:80/api'
+    
 });
 
 export default axiosClient;

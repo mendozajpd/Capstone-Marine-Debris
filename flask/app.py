@@ -16,12 +16,8 @@ from collections import Counter
 
 
 app = Flask(__name__)
-CORS(
-    app,
-    resources={
-        r"/*": {"origins": "http://localhost:3000"},
-    },
-)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 # Extending Supervision's `Detections` to Handle YOLOv9 Results
@@ -294,7 +290,7 @@ def process_video(
 
         # Update detections with byte_tracker
         detections = byte_tracker.update_with_detections(detections)
-
+    
         # Update the detected_objects dictionary
         for tracker_id, class_id in zip(detections.tracker_id, detections.class_id):
             if tracker_id in detected_objects:
@@ -315,10 +311,11 @@ def process_video(
         # cv2.imshow("Detections", annotated_frame)  # Comment out this line
         # cv2.waitKey(1)  # Adjust the delay as needed
 
-        return annotated_frame
+        return annotated_frame, detected_objects
 
     for index, frame in enumerate(sv.get_video_frames_generator(source_path=source_path, stride=skip_frames)):
-        yield callback(frame, index)
+        annotated_frame, detected_objects = callback(frame, index)
+        yield annotated_frame, detected_objects
 
 
 # Detection, Tracking, and Counting in Full Frame
@@ -353,7 +350,7 @@ def video_feed():
         global object_count
         global class_counts
 
-        for frame in process_video(
+        for frame, detected_objects in process_video(
             model,
             config=yolov9_config,
             counting_zone="whole_frame",
@@ -372,6 +369,24 @@ def video_feed():
                     b"--frame\r\n"
                     b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n"
                 )
+
+            # Initialize an empty dictionary for the object counts
+            object_count = {}
+
+            # Iterate over the detected_objects dictionary
+            for tracker_id, object_info in detected_objects.items():
+                # Get the class name from the object_info list
+                class_name = object_info[0]
+
+                # If the class name is already in the object_count dictionary, increment its count
+                if class_name in object_count:
+                    object_count[class_name] += 1
+                # If the class name is not in the object_count dictionary, add it with a count of 1
+                else:
+                    object_count[class_name] = 1
+
+            # Print the object_count dictionary
+            print("Object Count:", object_count)
 
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
