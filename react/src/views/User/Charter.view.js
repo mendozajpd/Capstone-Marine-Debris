@@ -21,10 +21,20 @@ function Charter() {
   const [vehicleCount, setVehicleCount] = useState(0);
   const [classCount, setClassCount] = useState(0);
   const [objects, setObjects] = useState({});
+  const [objDictionary, setObjDictionary] = useState({});
 
   const videoSource = "http://192.168.193.206:5000/video_frame";
 
+    // Dummy data
+    const dummyData = [
+      { id: 1, scan: "Object A", cf: "0.42" },
+      { id: 2, scan: "Object B", cf: "0.55" },
+      { id: 3, scan: "Object C", cf: "0.31" },
+      { id: 4, scan: "Object D", cf: "0.71" },
+    ];
 
+
+  
   useEffect(() => {
     const interval = setInterval(() => {
       fetch("http://192.168.193.206:5000/backend_data")
@@ -33,13 +43,24 @@ function Charter() {
           // setVehicleCount(data.object_count);
           // setClassCount(data.class_counts);
           setObjects(data.object_count);
-          console.log(data.object_count);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          setError(true);
+        });
+
+      fetch("http://192.168.193.206:5000/object_dictionary")
+        .then((response) => response.json())
+        .then((data) => {
+          setObjDictionary(data);
+          // console.log(data);
         })
         .catch((error) => {
           console.error("Error:", error);
           setError(true);
         });
     }, 1000);
+    
 
     return () => clearInterval(interval);
   }, []);
@@ -73,6 +94,13 @@ function Charter() {
     // Handle saving the new project data
     console.log("New project data:", newProjectData);
   };
+
+    // Transform objDictionary to the format expected by the DataTable
+const dataForTable = Object.keys(objDictionary).map((key) => ({
+  id: key,
+  scan: objDictionary[key][0],  // The object type ("person" or "car")
+  cf: objDictionary[key][1],    // The confidence value
+}));
 
   const footer = (
     <>
@@ -133,7 +161,7 @@ function Charter() {
         </div>
         <div className="d-flex w-50 border">
           <div className="w-50 h-100 border">
-            <DataTable className="w-100">
+            <DataTable className="w-100" value={dataForTable} scrollable scrollHeight="75vh">
               <Column field="id" header="ID"></Column>
               <Column field="scan" header="Scanned"></Column>
               <Column field="cf" sortable header="Confidence"></Column>

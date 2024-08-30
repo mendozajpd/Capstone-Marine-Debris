@@ -343,12 +343,14 @@ yolov9_config=dict(conf=0.3, iou=0.45, classes=[0, 2, 3])
 
 object_count = 0
 class_counts = {}
+object_dictionary = {}
 
 @app.route("/video_frame")
 def video_feed():
     def generate():
         global object_count
         global class_counts
+        global object_dictionary
 
         for frame, detected_objects in process_video(
             model,
@@ -387,6 +389,9 @@ def video_feed():
 
             # Print the object_count dictionary
             print("Object Count:", object_count)
+            
+            object_dictionary = detected_objects
+            print("Object Dictionary:", object_dictionary)
 
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
@@ -397,6 +402,12 @@ def get_backend_data():
     global class_counts
     return jsonify({"object_count": object_count, "class_counts": class_counts})
 
+@app.route("/object_dictionary")
+def get_object_dictionary():
+    global object_dictionary
+    # Convert numpy.int64 keys to native Python int
+    object_dictionary = {int(key): value for key, value in object_dictionary.items()}
+    return jsonify(object_dictionary)
 
 if __name__ == "__main__":
     # Set threaded=True for better performance
