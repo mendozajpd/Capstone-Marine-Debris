@@ -19,8 +19,7 @@ app = Flask(__name__)
 CORS(
     app,
     resources={
-        r"/video_frame": {"origins": "http://localhost:3000"},
-        r"/object_count": {"origins": "http://localhost:3000"},
+        r"/*": {"origins": "http://localhost:3000"},
     },
 )
 

@@ -16,9 +16,34 @@ function Charter() {
 
   const { project } = useParams();
 
+  // LIVE FEED
+  const [error, setError] = useState(false);
+  const [vehicleCount, setVehicleCount] = useState(0);
+  const [classCount, setClassCount] = useState(0);
+
+  const videoSource = "http://127.0.0.1:5000/video_frame";
+
+
   useEffect(() => {
-    fetchProject();
-  }, [project]);
+    const interval = setInterval(() => {
+      fetch("http://127.0.0.1:5000/backend_data")
+        .then((response) => response.json())
+        .then((data) => {
+          setVehicleCount(data.object_count);
+          setClassCount(data.class_counts);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          setError(true);
+        });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // useEffect(() => {
+  //   fetchProject();
+  // }, [project]);
 
   const fetchProject = async () => {
     if (!project) {
@@ -80,14 +105,28 @@ function Charter() {
   );
   return (
     <div className="d-flex flex-column w-100 vh-100 p-3">
-      <NewProject
+      {/* <NewProject
         visible={newProject}
         onHide={() => setNewProject(false)}
         onSave={handleNewProjectSave}
-      />
+      /> */}
       <div className="d-flex vh-75">
         <div className="d-flex justify-content-center align-items-center w-50 border">
-          IMAGE LIVE FEED
+          {error ? (
+            <h1>Can't fetch video</h1>
+          ) : (
+            <>
+              <img
+                src={videoSource}
+                alt="Video Frame"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  border: "1px solid black",
+                }}
+              />
+            </>
+          )}
         </div>
         <div className="d-flex w-50 border">
           <div className="w-50 h-100 border">
