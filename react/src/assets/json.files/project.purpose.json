@@ -1,0 +1,10 @@
+{
+    "purposes": [
+      { "label": "Environmental Monitoring", "value": "environmental_monitoring" },
+      { "label": "Oil and Gas Exploration", "value": "oil_and_gas_exploration" },
+      { "label": "Underwater Archaeology", "value": "underwater_archaeology" },
+      { "label": "Marine Biology Research", "value": "marine_biology_research" },
+      { "label": "Underwater Infrastructure Inspection", "value": "underwater_infrastructure_inspection" }
+    ]
+  }
+  

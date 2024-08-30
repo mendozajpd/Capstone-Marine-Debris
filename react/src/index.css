@@ -1,0 +1,185 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import '~font-awesome/css/font-awesome.min.css';
+
+
+* {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+}
+
+header {
+  height: 50px;
+  align-items: center;
+  border-bottom: 1px solid rgba(50, 50, 93, 0.25);
+}
+
+aside {
+  height: 100vh;
+  width: 25%;
+  border-right: 1px solid rgba(50, 50, 93, 0.25);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 1.5rem 0 1rem 0;
+  font-family: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  color: inherit;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+h5 {
+  font-size: 1.25rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
+
+p {
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.p-sidebar-content {
+  overflow-y: hidden;
+}
+
+.admin-header {
+  background-color: #1e1e44;
+  height: 50px;
+}
+
+.admin-sidebar {
+  background-color: #ffff;
+}
+
+
+.custom-navitem {
+  color: inherit;
+  display: flex;
+  text-decoration: none;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.75rem;
+  /* equivalent to p-3 */
+  border-radius: 0.25rem;
+  /* equivalent to border-round */
+  font-weight: 700;
+  /* equivalent to text-700 */
+  transition-duration: 150ms;
+  /* equivalent to transition-duration-150 */
+  transition-property: color, background-color;
+  /* equivalent to transition-colors */
+  width: 100%;
+  /* equivalent to w-full */
+}
+
+.custom-navitem:hover {
+  background-color: #f0f0f0;
+  /* equivalent to hover:surface-100 */
+}
+
+
+.text-white {
+  color: white;
+}
+
+/* PRIMEREACT TABLE */
+.p-datatable-emptymessage {
+  color: #676767;
+}
+
+.hoverable-row {
+  cursor: pointer;
+}
+
+.hoverable-row:hover {
+  background-color: #f5f5f5;
+}
+
+.p-menuitem-link {
+  text-decoration: none;
+}
+
+.p-tieredmenu-root-list {
+
+  padding: 0;
+}
+
+.p-menuitem-link {
+  padding: 0;
+}
+
+.p-tieredmenu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+  border-radius: 10px;
+}
+
+.pi-trash {
+  color: red;
+  margin-right: 10px;
+}
+
+.p-splitbutton .p-button-icon-left {
+  margin-right: 5px;
+}
+
+.p-splitbutton-menubutton {
+  border-left: 1px solid white;
+}
+
+.p-tabview-nav-link {
+  color: black;
+  text-decoration: none;
+}
+
+/* DROPDOWN */
+.profile-dropdown .dropdown-toggle {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.profile-dropdown .dropdown-toggle:hover {
+  font-weight: 500 !important;
+}
+
+.profile-dropdown .dropdown-toggle:focus {
+  border-color: none !important;
+}
+
+.profile-dropdown .dropdown-toggle::after {
+  display: none;
+}
+
+.profile-dropdown .dropdown-menu {
+  --bs-dropdown-link-active-bg: #2c66b2 !important;
+}

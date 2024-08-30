@@ -1,0 +1,119 @@
+{
+    "PH-14": [
+      {"id": "PH-AR", "name": "Marawi"},
+      {"id": "PH-CA", "name": "Cotabato City"},
+      {"id": "PH-MG", "name": "Maguindanao"},
+      {"id": "PH-SU", "name": "Sulu"},
+      {"id": "PH-TA", "name": "Tawi-Tawi"},
+      {"id": "PH-BU", "name": "Basilan"}
+    ],
+    "PH-02": [
+      {"id": "PH-NAG", "name": "Naga"},
+      {"id": "PH-LEGAZPI", "name": "Legazpi"},
+      {"id": "PH-MASB", "name": "Masbate City"},
+      {"id": "PH-SORSO", "name": "Sorsogon City"},
+      {"id": "PH-IRIGA", "name": "Iriga"},
+      {"id": "PH-SORS", "name": "Sorsogon"}
+    ],
+    "PH-05": [
+      {"id": "PH-ILOILO", "name": "Iloilo City"},
+      {"id": "PH-BACOLOD", "name": "Bacolod"},
+      {"id": "PH-NEGROS", "name": "Negros Occidental"},
+      {"id": "PH-SIPALAY", "name": "Sipalay"},
+      {"id": "PH-ILO", "name": "Iloilo"}
+    ],
+    "PH-06": [
+      {"id": "PH-CEBU", "name": "Cebu City"},
+      {"id": "PH-TAGB", "name": "Tagbilaran"},
+      {"id": "PH-BOH", "name": "Bohol"},
+      {"id": "PH-SIQU", "name": "Siquijor"},
+      {"id": "PH-CEB", "name": "Cebu"}
+    ],
+    "PH-08": [
+      {"id": "PH-TACLOB", "name": "Tacloban"},
+      {"id": "PH-ORMOC", "name": "Ormoc"},
+      {"id": "PH-BAYBA", "name": "Baybay"},
+      {"id": "PH-MABIN", "name": "Mabinay"},
+      {"id": "PH-SOGOD", "name": "Sogod"}
+    ],
+    "PH-09": [
+      {"id": "PH-ZAMBOA", "name": "Zamboanga City"},
+      {"id": "PH-DAPIT", "name": "Dapitan"},
+      {"id": "PH-DIPOLO", "name": "Dipolog"},
+      {"id": "PH-PAGADI", "name": "Pagadian"},
+      {"id": "PH-ZAMBO", "name": "Zamboanga del Sur"}
+    ],
+    "PH-10": [
+      {"id": "PH-CAGAYA", "name": "Cagayan de Oro"},
+      {"id": "PH-ILIGAN", "name": "Iligan"},
+      {"id": "PH-OZAMI", "name": "Ozamiz"},
+      {"id": "PH-GINGOOG", "name": "Gingoog"},
+      {"id": "PH-MALAYB", "name": "Malaybalay"}
+    ],
+    "PH-11": [
+      {"id": "PH-DAVAO", "name": "Davao City"},
+      {"id": "PH-MATI", "name": "Mati"},
+      {"id": "PH-TAGUM", "name": "Tagum"},
+      {"id": "PH-PANABO", "name": "Panabo"},
+      {"id": "PH-DAVAODEL", "name": "Davao del Sur"}
+    ],
+    "PH-12": [
+      {"id": "PH-KORON", "name": "Koronadal"},
+      {"id": "PH-COTABA", "name": "Cotabato"},
+      {"id": "PH-KIDAPA", "name": "Kidapawan"},
+      {"id": "PH-KABACA", "name": "Kabacan"},
+      {"id": "PH-GENSAN", "name": "General Santos"}
+    ],
+    "PH-13": [
+      {"id": "PH-BUTUA", "name": "Butuan"},
+      {"id": "PH-SURIGA", "name": "Surigao City"},
+      {"id": "PH-TANDAG", "name": "Tandag"},
+      {"id": "PH-BISLIG", "name": "Bislig"},
+      {"id": "PH-AGUSAN", "name": "Agusan del Sur"}
+    ],
+    "PH-15": [
+      {"id": "PH-NCR", "name": "Metro Manila"}
+    ],
+    "PH-01": [
+      {"id": "PH-LAOAG", "name": "Laoag"},
+      {"id": "PH-BATA", "name": "Batac"},
+      {"id": "PH-MALA", "name": "Malasiqui"},
+      {"id": "PH-URDAN", "name": "Urdaneta"},
+      {"id": "PH-PANGA", "name": "Pangasinan"}
+    ],
+    "PH-03": [
+      {"id": "PH-TARLA", "name": "Tarlac City"},
+      {"id": "PH-ANGELE", "name": "Angeles"},
+      {"id": "PH-CITYOFP", "name": "City of San Fernando"},
+      {"id": "PH-PAMBA", "name": "Pampanga"},
+      {"id": "PH-TAR", "name": "Tarlac"}
+    ],
+    "PH-04": [
+      {"id": "PH-CAVIT", "name": "Cavite City"},
+      {"id": "PH-IMUSA", "name": "Imus"},
+      {"id": "PH-TRECE", "name": "Trece Martires"},
+      {"id": "PH-TAGAY", "name": "Tagaytay"},
+      {"id": "PH-Cavit", "name": "Cavite"}
+    ],
+    "PH-07": [
+      {"id": "PH-ZAMBOAD", "name": "Zamboanga City"},
+      {"id": "PH-ZAMBOAS", "name": "Zamboanga Sibugay"},
+      {"id": "PH-ZAMBOADN", "name": "Zamboanga del Norte"},
+      {"id": "PH-ZAMBOADE", "name": "Zamboanga del Sur"}
+    ],
+    "PH-16": [
+      {"id": "PH-BAGUIO", "name": "Baguio"},
+      {"id": "PH-BENGE", "name": "Benget"},
+      {"id": "PH-KALIN", "name": "Kalinga"},
+      {"id": "PH-MOUNT", "name": "Mountain Province"},
+      {"id": "PH-APAYAO", "name": "Apayao"}
+    ],
+    "PH-17": [
+      {"id": "PH-PALAWA", "name": "Puerto Princesa"},
+      {"id": "PH-ELNID", "name": "El Nido"},
+      {"id": "PH-TAYTAY", "name": "Taytay"},
+      {"id": "PH-BRORA", "name": "Brooke's Point"},
+      {"id": "PH-PALAWA", "name": "Palawan"}
+    ]
+  }
+  

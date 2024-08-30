@@ -1,0 +1,28 @@
+.bg-ocean {
+    background: url('../images/bg.png') no-repeat fixed center,
+    #000 no-repeat fixed center;
+    background-size: cover;
+}
+
+.form-reg .card {
+    min-width: 450px;
+}
+.form-reg .card form {
+    margin-top: 2rem;
+}
+
+.form-reg .card .field {
+    margin-bottom: 1.5rem;
+}
+
+.input-padding {
+    padding-left: 10px;
+}
+.p-icon.p-password-show-icon {
+    position: absolute;
+    right: 10px;
+}
+.p-icon.p-password-hide-icon {
+    position: absolute;
+    right: 10px;
+}
