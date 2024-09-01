@@ -292,14 +292,15 @@ def process_video(
         detections = byte_tracker.update_with_detections(detections)
     
         # Update the detected_objects dictionary
-        for tracker_id, class_id in zip(detections.tracker_id, detections.class_id):
+        for tracker_id, class_id, confidence in zip(detections.tracker_id, detections.class_id, detections.confidence):
             if tracker_id in detected_objects:
-                # Increment the count if the object has been detected before
-                detected_objects[tracker_id][1] += 1
+                # Update the count and confidence if the object has been detected before
+                # detected_objects[tracker_id][1] += 1
+                detected_objects[tracker_id][2] = float(confidence)
             else:
                 # Add the object to the dictionary if it hasn't been detected before
-                detected_objects[tracker_id] = [model.model.names[class_id], 1]
-
+                detected_objects[tracker_id] = [model.model.names[class_id], 1, float(confidence)]
+           
         # Calculate and display FPS
         current_time = time.time()
         fps = 1 / (current_time - last_time)
@@ -319,27 +320,9 @@ def process_video(
 
 
 # Detection, Tracking, and Counting in Full Frame
-yolov9_config=dict(conf=0.3, iou=0.45, classes=[0, 2, 3])
-# detected_objects = process_video(model, config=yolov9_config, counting_zone='whole_frame', show_labels=True, target_path='demo_file.mp4')
-# print("Detected Objects:", detected_objects)
+# yolov9_config=dict(conf=0.3, iou=0.45, classes=[0, 2, 3])
+yolov9_config=dict(conf=0.3, iou=0.45)
 
-# # Initialize an empty dictionary for the object counts
-# object_count = {}
-
-# # Iterate over the detected_objects dictionary
-# for tracker_id, object_info in detected_objects.items():
-#     # Get the class name from the object_info list
-#     class_name = object_info[0]
-
-#     # If the class name is already in the object_count dictionary, increment its count
-#     if class_name in object_count:
-#         object_count[class_name] += 1
-#     # If the class name is not in the object_count dictionary, add it with a count of 1
-#     else:
-#         object_count[class_name] = 1
-
-# # Print the object_count dictionary
-# print("Object Count:", object_count)
 
 object_count = 0
 class_counts = {}

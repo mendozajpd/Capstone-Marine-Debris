@@ -53,7 +53,7 @@ function Charter() {
         .then((response) => response.json())
         .then((data) => {
           setObjDictionary(data);
-          // console.log(data);
+          console.log(data);
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -99,7 +99,7 @@ function Charter() {
 const dataForTable = Object.keys(objDictionary).map((key) => ({
   id: key,
   scan: objDictionary[key][0],  // The object type ("person" or "car")
-  cf: objDictionary[key][1],    // The confidence value
+  cf: objDictionary[key][2],    // The confidence value
 }));
 
   const footer = (
