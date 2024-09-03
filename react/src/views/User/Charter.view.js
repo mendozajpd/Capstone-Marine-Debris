@@ -26,28 +26,20 @@ function Charter() {
   const videoSource = "http://192.168.193.206:5000/video_frame";
 
     // Dummy data
-    const dummyData = [
-      { id: 1, scan: "Object A", cf: "0.42" },
-      { id: 2, scan: "Object B", cf: "0.55" },
-      { id: 3, scan: "Object C", cf: "0.31" },
-      { id: 4, scan: "Object D", cf: "0.71" },
-    ];
-
-
   
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("http://192.168.193.206:5000/backend_data")
-        .then((response) => response.json())
-        .then((data) => {
-          // setVehicleCount(data.object_count);
-          // setClassCount(data.class_counts);
-          setObjects(data.object_count);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          setError(true);
-        });
+      // fetch("http://192.168.193.206:5000/backend_data")
+      //   .then((response) => response.json())
+      //   .then((data) => {
+      //     // setVehicleCount(data.object_count);
+      //     // setClassCount(data.class_counts);
+      //     setObjects(data.object_count);
+      //   })
+      //   .catch((error) => {
+      //     console.error("Error:", error);
+      //     setError(true);
+      //   });
 
       fetch("http://192.168.193.206:5000/object_dictionary")
         .then((response) => response.json())

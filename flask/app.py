@@ -56,7 +56,7 @@ class ExtendedDetections(BaseDetections):
 set_logging(verbose=False)
 device = select_device(0)
 model = DetectMultiBackend(
-    weights="gelan-c.pt", device=device, data="data/coco.yaml", fuse=True
+    weights="trash-detect.pt", device=device, data="data/coco.yaml", fuse=True
 )
 model = AutoShape(model)
 
@@ -86,7 +86,7 @@ def play(filename, width=500):
 
 
 # Constants
-SOURCE_VIDEO_PATH = "traffic.mp4"
+SOURCE_VIDEO_PATH = "bottle.mp4"
 TARGET_VIDEO_PATH = "output.mp4"
 
 
