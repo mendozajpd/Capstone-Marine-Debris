@@ -1,4 +1,4 @@
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 from flask_cors import CORS
 import numpy as np
 from base64 import b64encode
@@ -13,7 +13,9 @@ from supervision.config import CLASS_NAME_DATA_FIELD
 from IPython.display import HTML
 import time
 from collections import Counter
-
+from PIL import Image
+from io import BytesIO
+import base64
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -318,6 +320,35 @@ def process_video(
         annotated_frame, detected_objects = callback(frame, index)
         yield annotated_frame, detected_objects
 
+def process_image(
+    model,
+    image_data,
+    config=dict(
+        conf=0.1,
+        iou=0.45,
+        classes=True,
+    ),
+    counting_zone=True,
+    show_labels=True,
+    target_path=TARGET_VIDEO_PATH,
+):
+    # Setup model and image info
+    model, image_info = setup_model_and_image_info(model, config, image_data)
+    byte_tracker = create_byte_tracker(image_info)
+    annotators_list, trace_annotator, label_annotator = setup_annotators()
+    polygon_zone, polygon_zone_annotator = (
+        setup_counting_zone(counting_zone, image_info)
+        if counting_zone
+        else (None, None)
+    )
+
+    # Process the image
+    annotated_image, detected_objects = process_single_image(
+        image_data, model, byte_tracker, annotators_list, trace_annotator, 
+        label_annotator, show_labels, polygon_zone, polygon_zone_annotator
+    )
+
+    return annotated_image, detected_objects
 
 # Detection, Tracking, and Counting in Full Frame
 # yolov9_config=dict(conf=0.3, iou=0.45, classes=[0, 2, 3])
@@ -391,6 +422,21 @@ def get_object_dictionary():
     # Convert numpy.int64 keys to native Python int
     object_dictionary = {int(key): value for key, value in object_dictionary.items()}
     return jsonify(object_dictionary)
+
+@app.route('/upload', methods=['POST'])
+def upload():
+    try:
+        data = request.get_json()
+        # Process the data (e.g., save the image data)
+        # print("Received image data:", data)
+        # Return a JSON response
+        return jsonify({"status": "success", "message": "Frame received"}), 200
+    except Exception as e:
+        # Return an error response if something goes wrong
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == "__main__":
     # Set threaded=True for better performance
