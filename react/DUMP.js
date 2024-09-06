@@ -67,3 +67,13 @@ const ClientWebCam = () => {
 };
 
 export default ClientWebCam;
+
+
+
+
+sudo chown -R www-data:www-data /var/www/html/storage
+sudo chmod -R 755 /var/www/html/storage
+mkdir -p /var/www/html/storage/app/public/videos
+sudo chown -R www-data:www-data /var/www/html/storage/app/public/videos
+sudo chmod -R 755 /var/www/html/storage/app/public/videos
+php artisan storage:link

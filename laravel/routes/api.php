@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\VideoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +39,9 @@ Route::post('users', [UserController::class, 'store']);
 Route::put('users/{id}', [UserController::class, 'update']);
 Route::put('usersInfo/{id}', [UserController::class, 'updateInformation']);
 Route::delete('users/{id}', [UserController::class, 'destroy']);
+
+//VIDEO UPLOAD
+Route::post('/upload-video', [VideoController::class,'upload']);
 
 Route::group([
 

@@ -6,6 +6,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import Webcam from "react-webcam";
+import axios from "axios";
 
 import NewProject from "../_Components/NewProject.dialog";
 
@@ -14,7 +15,6 @@ import { getProjectByProjectId } from "../../services/projectService";
 function Charter() {
   const [newProject, setNewProject] = useState(false);
   const [projectData, setProjectData] = useState({});
-
   const { project } = useParams();
 
 
@@ -36,6 +36,44 @@ function Charter() {
   const [objects, setObjects] = useState({});
   const [objDictionary, setObjDictionary] = useState({});
 
+  //file-related
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      uploadVideo(file);
+    }
+  };
+
+  const uploadVideo = async (file) => {
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('video', file);
+
+    try {
+      await axios.post('http://192.168.193.206:80/api/upload-video', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+      console.log("Video uploaded successfully");
+    } catch (error) {
+      console.error('Error uploading video:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFolderButtonClick = () => {
+    fileInputRef.current.click(); // Trigger file input click
+  };
 
   const handleStartCaptureClick = React.useCallback(() => {
     setCapturing(true);
@@ -245,7 +283,18 @@ const sendFrameToServer = async (imageData) => {
           />
         </div>
         <div>
-          <Button icon="pi pi-folder" className="mr-2 rounded-3" />
+          <Button
+            icon="pi pi-folder"
+            className="mr-2 rounded-3"
+            onClick={handleFolderButtonClick}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            accept="video/*"
+            onChange={handleFileSelect}
+          />
           <Button
             label="New"
             severity="success"
@@ -260,11 +309,11 @@ const sendFrameToServer = async (imageData) => {
   );
   return (
     <div className="d-flex flex-column w-100 vh-100 p-3">
-      <NewProject
+      {/* <NewProject
         visible={newProject}
         onHide={() => setNewProject(false)}
         onSave={handleNewProjectSave}
-      />
+      /> */}
       <div className="d-flex vh-75">
       <div className="d-flex justify-content-center align-items-center w-50 border">
           <Button
@@ -283,8 +332,7 @@ const sendFrameToServer = async (imageData) => {
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
                   videoConstraints={{ facingMode: "user" }}
-                  
-                  style={{ display: "none" }}  // Hide the webcam feed
+                    style={{ display: "none" }}  // Hide the webcam feed
                 />
                 <div className="mt-2">
                   {!capturing ? (
@@ -374,6 +422,17 @@ const sendFrameToServer = async (imageData) => {
                   return null;
                 })()}
               </Card>
+              <div className="mt-2">
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="progress-bar">
+                  <div
+                    className="progress-bar-fill"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              )}
+              {uploadProgress === 100 && <p>Upload complete!</p>}
+            </div>
             </div>
           </div>
         </div>
