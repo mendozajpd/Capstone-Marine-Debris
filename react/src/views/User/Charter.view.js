@@ -136,16 +136,16 @@ function Charter() {
       //     setError(true);
       //   });
 
-      // fetch("http://192.168.193.206:5000/object_dictionary")
-      //   .then((response) => response.json())
-      //   .then((data) => {
-      //     setObjDictionary(data);
-      //     console.log(data);
-      //   })
-      //   .catch((error) => {
-      //     console.error("Error:", error);
-      //     setError(true);
-      //   });
+      fetch("http://192.168.193.206:5000/object_dictionary")
+        .then((response) => response.json())
+        .then((data) => {
+          setObjDictionary(data);
+          console.log(data);
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          setError(true);
+        });
     }, 1000);
     
 
@@ -343,16 +343,16 @@ const sendFrameToServer = async (imageData) => {
                 </div>
               </>
               ) : (
-                // <img
-                //   src={videoSource}
-                //   alt="Video Frame"
-                //   style={{
-                //     width: "100%",
-                //     height: "auto",
-                //     border: "1px solid black",
-                //   }}
-                // />
-                <></>
+                <img
+                  src={videoSource}
+                  alt="Video Frame"
+                  style={{
+                    width: "100%",
+                    height: "auto",
+                    border: "1px solid black",
+                  }}
+                />
+                // <></>
               )}
             </>
           )}
