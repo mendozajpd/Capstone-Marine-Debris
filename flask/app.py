@@ -19,7 +19,12 @@ import base64
 
 app = Flask(__name__)
 cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+app.config["CORS_HEADERS"] = "Content-Type"
+
+prev_frame_time = 0
+new_frame_time = 0
+fps = 24
+current_frame = 0
 
 
 # Extending Supervision's `Detections` to Handle YOLOv9 Results
@@ -89,6 +94,7 @@ def play(filename, width=500):
 
 # Constants
 SOURCE_VIDEO_PATH = "bottle.mp4"
+# SOURCE_VIDEO_PATH = ""
 TARGET_VIDEO_PATH = "output.mp4"
 
 
@@ -99,43 +105,43 @@ def prepare_model_and_video_info(model, config, source_path):
     return model, video_info
 
 
-def setup_annotator():
-    return sv.BoundingBoxAnnotator(thickness=2)
+# def setup_annotator():
+#     return sv.BoundingBoxAnnotator(thickness=2)
 
 
-def simple_annotate_frame(frame, model, annotator):
-    frame_rgb = frame[..., ::-1]
-    results = model(frame_rgb, size=640, augment=False)
-    detections = ExtendedDetections.from_yolov9(results)
-    print(results.pred[0].shape, detections.xyxy.shape)
+# def simple_annotate_frame(frame, model, annotator):
+#     frame_rgb = frame[..., ::-1]
+#     results = model(frame_rgb, size=640, augment=False)
+#     detections = ExtendedDetections.from_yolov9(results)
+#     print(results.pred[0].shape, detections.xyxy.shape)
 
-    # Display the frame with detections using cv2.imshow
-    annotated_frame = annotator.annotate(scene=frame.copy(), detections=detections)
-    cv2.imshow("Detections", annotated_frame)
-    cv2.waitKey(1)  # Adjust the delay as needed
+#     # Display the frame with detections using cv2.imshow
+#     annotated_frame = annotator.annotate(scene=frame.copy(), detections=detections)
+#     cv2.imshow("Detections", annotated_frame)
+#     cv2.waitKey(1)  # Adjust the delay as needed
 
-    return annotated_frame
+#     return annotated_frame
 
 
-def simple_process_video(
-    model,
-    config=dict(
-        conf=0.1,
-        iou=0.45,
-        classes=None,
-    ),
-    source_path=SOURCE_VIDEO_PATH,
-    target_path=TARGET_VIDEO_PATH,
-):
-    model, _ = prepare_model_and_video_info(model, config, source_path)
-    annotator = setup_annotator()
+# def simple_process_video(
+#     model,
+#     config=dict(
+#         conf=0.1,
+#         iou=0.45,
+#         classes=None,
+#     ),
+#     source_path=SOURCE_VIDEO_PATH,
+#     target_path=TARGET_VIDEO_PATH,
+# ):
+#     model, _ = prepare_model_and_video_info(model, config, source_path)
+#     annotator = setup_annotator()
 
-    def callback(frame: np.ndarray, index: int) -> np.ndarray:
-        return simple_annotate_frame(frame, model, annotator)
+#     def callback(frame: np.ndarray, index: int) -> np.ndarray:
+#         return simple_annotate_frame(frame, model, annotator)
 
-    sv.process_video(
-        source_path=source_path, target_path=target_path, callback=callback
-    )
+#     sv.process_video(
+#         source_path=source_path, target_path=target_path, callback=callback
+#     )
 
 
 # Advanced Detection, Tracking, and Counting with YOLOv9 and Supervision
@@ -144,6 +150,15 @@ def setup_model_and_video_info(model, config, source_path):
     video_info = sv.VideoInfo.from_video_path(source_path)
     return model, video_info
 
+def setup_model_and_webcam_info(model, config, webcam):
+    model = prepare_yolov9(model, **config)
+    cam_width = webcam.get(cv2.CAP_PROP_FRAME_WIDTH)
+    cam_height = webcam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    return model, cam_width, cam_height
+
+def setup_model(model, config):
+    model = prepare_yolov9(model, **config)
+    return model
 
 def create_byte_tracker(video_info):
     return sv.ByteTrack(
@@ -151,6 +166,14 @@ def create_byte_tracker(video_info):
         track_buffer=250,
         match_thresh=0.95,
         frame_rate=video_info.fps,
+    )
+    
+def create_byte_tracker_webcam(fps):
+    return sv.ByteTrack(
+        track_thresh=0.25,
+        track_buffer=250,
+        match_thresh=0.95,
+        frame_rate=fps,
     )
 
 
@@ -203,6 +226,32 @@ def setup_counting_zone(counting_zone, video_info):
     )
     return polygon_zone, polygon_zone_annotator
 
+def setup_counting_zone_webcam(counting_zone, cam_width, cam_height):
+    if counting_zone == "whole_frame":
+        polygon = np.array(
+            [
+                [0, 0],
+                [cam_width - 1, 0],
+                [cam_width - 1, cam_height - 1],
+                [0, cam_height - 1],
+            ]
+        )
+    else:
+        polygon = np.array(counting_zone)
+    polygon_zone = sv.PolygonZone(
+        polygon=polygon,
+        frame_resolution_wh=(cam_width, cam_height),
+        triggering_position=sv.Position.CENTER,
+    )
+    polygon_zone_annotator = sv.PolygonZoneAnnotator(
+        polygon_zone,
+        sv.Color.ROBOFLOW,
+        thickness=2 * (2 if counting_zone == "whole_frame" else 1),
+        text_thickness=1,
+        text_scale=0.5,
+    )
+    return polygon_zone, polygon_zone_annotator
+
 
 def annotate_frame(
     frame,
@@ -243,6 +292,45 @@ def annotate_frame(
 
     return annotated_frame
 
+def annotate_frame_webcam(
+    frame,
+    index,
+    detections,
+    byte_tracker,
+    counting_zone,
+    polygon_zone,
+    polygon_zone_annotator,
+    trace_annotator,
+    annotators_list,
+    label_annotator,
+    show_labels,
+    model,
+):
+    current_frame += 1
+    detections = byte_tracker.update_with_detections(detections)
+    annotated_frame = frame.copy()
+
+    if counting_zone is not None:
+        is_inside_polygon = polygon_zone.trigger(detections)
+        detections = detections[is_inside_polygon]
+        annotated_frame = polygon_zone_annotator.annotate(annotated_frame)
+
+    annotated_frame = trace_annotator.annotate(
+        scene=annotated_frame, detections=detections
+    )
+
+    section_index = int(index / (current_frame/ len(annotators_list)))
+    annotated_frame = annotators_list[section_index].annotate(
+        scene=annotated_frame, detections=detections
+    )
+
+    if show_labels:
+        annotated_frame = add_labels_to_frame(
+            label_annotator, annotated_frame, detections, model
+        )
+
+    return annotated_frame
+
 
 def add_labels_to_frame(annotator, frame, detections, model):
     labels = [
@@ -263,22 +351,34 @@ def process_video(
     ),
     counting_zone=True,
     show_labels=True,
-    source_path=SOURCE_VIDEO_PATH,
+    # source_path=SOURCE_VIDEO_PATH,
     target_path=TARGET_VIDEO_PATH,
     skip_frames=1,
 ):
-    model, video_info = setup_model_and_video_info(model, config, source_path)
-    byte_tracker = create_byte_tracker(video_info)
+    global prev_frame_time
+    global new_frame_time
+    global fps
+    
+    cap = cv2.VideoCapture(0)  # Open the webcam
+    
+    if not cap.isOpened():
+        print("Error: Could not open camera.")
+        return
+    
+    model, cam_width, cam_height = setup_model_and_video_info(model, config, cap)
+    
+    byte_tracker = create_byte_tracker_webcam(fps)
+    
     annotators_list, trace_annotator, label_annotator = setup_annotators()
     polygon_zone, polygon_zone_annotator = (
-        setup_counting_zone(counting_zone, video_info)
+        setup_counting_zone_webcam(counting_zone, cam_width, cam_height)
         if counting_zone
         else (None, None)
     )
 
     last_class_counts = None
     last_time = time.time()
-
+    
     detected_objects = {}
 
     def callback(frame: np.ndarray, index: int) -> np.ndarray:
@@ -292,7 +392,7 @@ def process_video(
 
         # Update detections with byte_tracker
         detections = byte_tracker.update_with_detections(detections)
-    
+
         # Update the detected_objects dictionary
         for tracker_id, class_id, confidence in zip(detections.tracker_id, detections.class_id, detections.confidence):
             if tracker_id in detected_objects:
@@ -302,7 +402,7 @@ def process_video(
             else:
                 # Add the object to the dictionary if it hasn't been detected before
                 detected_objects[tracker_id] = [model.model.names[class_id], 1, float(confidence)]
-           
+
         # Calculate and display FPS
         current_time = time.time()
         fps = 1 / (current_time - last_time)
@@ -310,15 +410,259 @@ def process_video(
         print(f"FPS: {fps}")
 
         # Display the frame with detections using cv2.imshow
-        annotated_frame = annotate_frame(frame, index, video_info, detections, byte_tracker, counting_zone, polygon_zone, polygon_zone_annotator, trace_annotator, annotators_list, label_annotator, show_labels, model)
+        annotated_frame = annotate_frame(frame, index, detections, byte_tracker, counting_zone, polygon_zone, polygon_zone_annotator, trace_annotator, annotators_list, label_annotator, show_labels, model)
         # cv2.imshow("Detections", annotated_frame)  # Comment out this line
         # cv2.waitKey(1)  # Adjust the delay as needed
 
         return annotated_frame, detected_objects
 
-    for index, frame in enumerate(sv.get_video_frames_generator(source_path=source_path, stride=skip_frames)):
+    for index, frame in enumerate(sv.get_video_frames_generator(source_path=cap, stride=skip_frames)):
+        new_frame_time = time.time() 
+        fps = 1/(new_frame_time-prev_frame_time) 
+        prev_frame_time = new_frame_time 
+        fps = str(int(fps))
         annotated_frame, detected_objects = callback(frame, index)
         yield annotated_frame, detected_objects
+
+# def process_webcam(
+#     model,
+#     config=dict(
+#         conf=0.1,
+#         iou=0.45,
+#         classes=True,
+#     ),
+#     counting_zone=True,
+#     show_labels=True,
+#     source_path=SOURCE_VIDEO_PATH,
+#     target_path=TARGET_VIDEO_PATH,
+#     skip_frames=1,
+# ):
+    
+#     cap = cv2.VideoCapture(0)  # Open the webcam
+    
+#     model, video_info = setup_model_and_video_info(model, config, cap)
+#     byte_tracker = create_byte_tracker(video_info)
+#     annotators_list, trace_annotator, label_annotator = setup_annotators()
+#     polygon_zone, polygon_zone_annotator = (
+#         setup_counting_zone(counting_zone, video_info)
+#         if counting_zone
+#         else (None, None)
+#     )
+
+#     last_class_counts = None
+#     last_time = time.time()
+
+#     detected_objects = {}
+
+#     def callback(frame: np.ndarray, index: int) -> np.ndarray:
+#         nonlocal last_class_counts, last_time
+#         if index % skip_frames != 0:
+#             return frame
+
+#         frame_rgb = frame[..., ::-1]
+#         results = model(frame_rgb, size=608, augment=False)
+#         detections, class_counts = ExtendedDetections.from_yolov9(results)
+
+#         # Update detections with byte_tracker
+#         detections = byte_tracker.update_with_detections(detections)
+
+#         # Update the detected_objects dictionary
+#         for tracker_id, class_id, confidence in zip(detections.tracker_id, detections.class_id, detections.confidence):
+#             if tracker_id in detected_objects:
+#                 # Update the count and confidence if the object has been detected before
+#                 # detected_objects[tracker_id][1] += 1
+#                 detected_objects[tracker_id][2] = float(confidence)
+#             else:
+#                 # Add the object to the dictionary if it hasn't been detected before
+#                 detected_objects[tracker_id] = [model.model.names[class_id], 1, float(confidence)]
+
+#         # Calculate and display FPS
+#         current_time = time.time()
+#         fps = 1 / (current_time - last_time)
+#         last_time = current_time
+#         print(f"FPS: {fps}")
+
+#         # Display the frame with detections using cv2.imshow
+#         annotated_frame = annotate_frame(frame, index, video_info, detections, byte_tracker, counting_zone, polygon_zone, polygon_zone_annotator, trace_annotator, annotators_list, label_annotator, show_labels, model)
+#         # cv2.imshow("Detections", annotated_frame)  # Comment out this line
+#         # cv2.waitKey(1)  # Adjust the delay as needed
+
+#         return annotated_frame, detected_objects
+
+#     for index, frame in enumerate(sv.get_video_frames_generator(source_path=cap, stride=skip_frames)):
+#         annotated_frame, detected_objects = callback(frame, index)
+#         yield annotated_frame, detected_objects
+
+# BEFORE HUGE CHANGE
+# def process_video(
+#     model,
+#     config=dict(
+#         conf=0.1,
+#         iou=0.45,
+#         classes=True,
+#     ),
+#     counting_zone=True,
+#     show_labels=True,
+#     source_path=SOURCE_VIDEO_PATH,
+#     target_path=TARGET_VIDEO_PATH,
+#     skip_frames=1,
+# ):
+    
+#     global prev_frame_time
+#     global new_frame_time
+    
+#     model, video_info = setup_model_and_video_info(model, config, source_path)
+    
+#     byte_tracker = create_byte_tracker(video_info)
+    
+#     annotators_list, trace_annotator, label_annotator = setup_annotators()
+#     polygon_zone, polygon_zone_annotator = (
+#         setup_counting_zone(counting_zone, video_info)
+#         if counting_zone
+#         else (None, None)
+#     )
+
+#     last_class_counts = None
+#     last_time = time.time()
+
+#     detected_objects = {}
+
+#     def callback(frame: np.ndarray, index: int) -> np.ndarray:
+#         nonlocal last_class_counts, last_time
+#         if index % skip_frames != 0:
+#             return frame
+
+#         frame_rgb = frame[..., ::-1]
+#         results = model(frame_rgb, size=608, augment=False)
+#         detections, class_counts = ExtendedDetections.from_yolov9(results)
+
+#         # Update detections with byte_tracker
+#         detections = byte_tracker.update_with_detections(detections)
+
+#         # Update the detected_objects dictionary
+#         for tracker_id, class_id, confidence in zip(detections.tracker_id, detections.class_id, detections.confidence):
+#             if tracker_id in detected_objects:
+#                 # Update the count and confidence if the object has been detected before
+#                 # detected_objects[tracker_id][1] += 1
+#                 detected_objects[tracker_id][2] = float(confidence)
+#             else:
+#                 # Add the object to the dictionary if it hasn't been detected before
+#                 detected_objects[tracker_id] = [model.model.names[class_id], 1, float(confidence)]
+
+#         # Calculate and display FPS
+#         current_time = time.time()
+#         fps = 1 / (current_time - last_time)
+#         last_time = current_time
+#         print(f"FPS: {fps}")
+
+#         # Display the frame with detections using cv2.imshow
+#         annotated_frame = annotate_frame(frame, index, video_info, detections, byte_tracker, counting_zone, polygon_zone, polygon_zone_annotator, trace_annotator, annotators_list, label_annotator, show_labels, model)
+#         # cv2.imshow("Detections", annotated_frame)  # Comment out this line
+#         # cv2.waitKey(1)  # Adjust the delay as needed
+
+#         return annotated_frame, detected_objects
+
+#     for index, frame in enumerate(sv.get_video_frames_generator(source_path=source_path, stride=skip_frames)):
+#         annotated_frame, detected_objects = callback(frame, index)
+#         yield annotated_frame, detected_objects
+
+# def process_video(
+#     model,
+#     config=dict(
+#         conf=0.1,
+#         iou=0.45,
+#         classes=True,
+#     ),
+#     counting_zone=True,
+#     show_labels=True,
+#     target_path=TARGET_VIDEO_PATH,
+#     skip_frames=1,
+# ):
+#     cap = cv2.VideoCapture(0)  # Open the webcam
+#     if not cap.isOpened():
+#         print("Error: Could not open camera.")
+#         return
+
+#     model, video_info = setup_model_and_video_info(model, config, cap)
+#     byte_tracker = create_byte_tracker(video_info)
+#     annotators_list, trace_annotator, label_annotator = setup_annotators()
+#     polygon_zone, polygon_zone_annotator = (
+#         setup_counting_zone(counting_zone, video_info)
+#         if counting_zone
+#         else (None, None)
+#     )
+
+#     last_class_counts = None
+#     last_time = time.time()
+
+#     detected_objects = {}
+
+#     def callback(frame: np.ndarray, index: int) -> np.ndarray:
+#         nonlocal last_class_counts, last_time
+#         if index % skip_frames != 0:
+#             return frame
+
+#         frame_rgb = frame[..., ::-1]
+#         results = model(frame_rgb, size=608, augment=False)
+#         detections, class_counts = ExtendedDetections.from_yolov9(results)
+
+#         # Update detections with byte_tracker
+#         detections = byte_tracker.update_with_detections(detections)
+
+#         # Update the detected_objects dictionary
+#         for tracker_id, class_id, confidence in zip(
+#             detections.tracker_id, detections.class_id, detections.confidence
+#         ):
+#             if tracker_id in detected_objects:
+#                 # Update the count and confidence if the object has been detected before
+#                 # detected_objects[tracker_id][1] += 1
+#                 detected_objects[tracker_id][2] = float(confidence)
+#             else:
+#                 # Add the object to the dictionary if it hasn't been detected before
+#                 detected_objects[tracker_id] = [
+#                     model.model.names[class_id],
+#                     1,
+#                     float(confidence),
+#                 ]
+
+#         # Calculate and display FPS
+#         current_time = time.time()
+#         fps = 1 / (current_time - last_time)
+#         last_time = current_time
+#         print(f"FPS: {fps}")
+
+#         # Display the frame with detections using cv2.imshow
+#         annotated_frame = annotate_frame(
+#             frame,
+#             index,
+#             video_info,
+#             detections,
+#             byte_tracker,
+#             counting_zone,
+#             polygon_zone,
+#             polygon_zone_annotator,
+#             trace_annotator,
+#             annotators_list,
+#             label_annotator,
+#             show_labels,
+#             model,
+#         )
+#         # cv2.imshow("Detections", annotated_frame)  # Comment out this line
+#         # cv2.waitKey(1)  # Adjust the delay as needed
+
+#         return annotated_frame, detected_objects
+
+#     index = 0
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             print("Error: Could not read frame.")
+#             break
+
+#         annotated_frame, detected_objects = callback(frame, index)
+#         yield annotated_frame, detected_objects
+#         index += 1
+
 
 def process_image(
     model,
@@ -344,20 +688,29 @@ def process_image(
 
     # Process the image
     annotated_image, detected_objects = process_single_image(
-        image_data, model, byte_tracker, annotators_list, trace_annotator, 
-        label_annotator, show_labels, polygon_zone, polygon_zone_annotator
+        image_data,
+        model,
+        byte_tracker,
+        annotators_list,
+        trace_annotator,
+        label_annotator,
+        show_labels,
+        polygon_zone,
+        polygon_zone_annotator,
     )
 
     return annotated_image, detected_objects
 
+
 # Detection, Tracking, and Counting in Full Frame
 # yolov9_config=dict(conf=0.3, iou=0.45, classes=[0, 2, 3])
-yolov9_config=dict(conf=0.3, iou=0.45)
+yolov9_config = dict(conf=0.3, iou=0.45)
 
 
 object_count = 0
 class_counts = {}
 object_dictionary = {}
+
 
 @app.route("/video_frame")
 def video_feed():
@@ -376,7 +729,9 @@ def video_feed():
             # Check that frame is not None and is a numpy array
             if frame is not None and isinstance(frame, np.ndarray):
                 # Convert the annotated frame to JPEG
-                ret, jpeg = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                ret, jpeg = cv2.imencode(
+                    ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+                )
                 if not ret:
                     continue
 
@@ -403,7 +758,7 @@ def video_feed():
 
             # Print the object_count dictionary
             print("Object Count:", object_count)
-            
+
             object_dictionary = detected_objects
             print("Object Dictionary:", object_dictionary)
 
@@ -416,6 +771,7 @@ def get_backend_data():
     global class_counts
     return jsonify({"object_count": object_count, "class_counts": class_counts})
 
+
 @app.route("/object_dictionary")
 def get_object_dictionary():
     global object_dictionary
@@ -423,7 +779,8 @@ def get_object_dictionary():
     object_dictionary = {int(key): value for key, value in object_dictionary.items()}
     return jsonify(object_dictionary)
 
-@app.route('/upload', methods=['POST'])
+
+@app.route("/upload", methods=["POST"])
 def upload():
     try:
         data = request.get_json()
@@ -435,7 +792,8 @@ def upload():
         # Return an error response if something goes wrong
         return jsonify({"status": "error", "message": str(e)}), 400
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
 
 if __name__ == "__main__":

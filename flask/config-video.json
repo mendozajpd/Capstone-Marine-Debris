@@ -1,0 +1,5 @@
+{
+    "conf": 0.1,
+    "iou": 0.45,
+    "classes": true
+}
