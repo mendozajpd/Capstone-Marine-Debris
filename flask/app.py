@@ -427,9 +427,7 @@ def get_object_dictionary():
 def upload():
     try:
         data = request.get_json()
-        # Process the data (e.g., save the image data)
-        # print("Received image data:", data)
-        # Return a JSON response
+
         return jsonify({"status": "success", "message": "Frame received"}), 200
     except Exception as e:
         # Return an error response if something goes wrong
